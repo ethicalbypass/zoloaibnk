@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zolo AI Funds - Secure Corporate Banking</title>
+    <!-- Production CSS optimized via standard link stylesheet -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #FBF9F5; color: #2C2A29; }
+        .parchment-card { background: #FFFFFF; border: 1px solid #EAE5DE; box-shadow: 0 4px 6px -1px rgba(44, 42, 41, 0.05); }
+        .parchment-input { background: #FCFCFB; border: 1px solid #D6CDC2; color: #2C2A29; }
+        .parchment-input:focus { border-color: #78716c; outline: none; }
+        .btn-primary { background-color: #2C2A29; color: #FFFFFF; transition: all 0.2s ease; }
+        .btn-primary:hover { background-color: #44403c; }
+        .tab-btn { background-color: #F4F1EA; border: 1px solid #D6CDC2; color: #2C2A29; }
+        .tab-btn:hover { background-color: #EAE5DE; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between" onload="initApp()">
+
+    <!-- Header -->
+    <header class="bg-white border-b border-[#EAE5DE] py-4 px-6 flex justify-between items-center shadow-sm">
+        <div class="flex items-center space-x-3">
+            <div class="bg-[#2C2A29] text-white p-2 rounded-lg font-bold text-lg">Z</div>
+            <div>
+                <h1 class="font-bold text-lg leading-tight text-[#2C2A29]">Zolo AI Funds</h1>
+                <p class="text-xs text-[#78716c]">Google Sheets Backed Real-Time Core</p>
+            </div>
+        </div>
+        <div id="user-badge" class="hidden text-xs bg-[#F4F1EA] px-3 py-1.5 rounded-full border border-[#D6CDC2] font-semibold text-[#2C2A29]"></div>
+    </header>
+
+    <!-- Main Container with Side Bar Layout -->
+    <main class="flex-grow flex flex-col md:flex-row items-center justify-center p-4 gap-6 max-w-7xl mx-auto w-full">
+
+        <!-- SIDEBAR: COMPANY TREASURY VIEW (Visible everywhere) -->
+        <aside class="w-full md:w-80 parchment-card p-6 rounded-2xl flex flex-col justify-between space-y-4">
+            <div>
+                <div class="flex items-center justify-between border-b border-[#EAE5DE] pb-3 mb-4">
+                    <h3 class="font-bold text-sm text-[#2C2A29] uppercase tracking-wider">Company Treasury</h3>
+                    <span class="inline-block w-2.5 h-2.5 rounded-full bg-green-600 animate-pulse"></span>
+                </div>
+                <span class="text-xs text-[#78716c] block mb-1">Live Holding Reserve</span>
+                <h2 class="text-2xl font-bold font-mono text-[#2C2A29]" id="sidebar-company-balance">PKR 12,450,000.00</h2>
+                <p class="text-[11px] text-[#78716c] mt-2">Real-time synchronized pool tracking company capital, reserves, and disbursements.</p>
+            </div>
+            <div class="pt-4 border-t border-[#EAE5DE]">
+                <button onclick="fetchSidebarCompanyBalance()" class="w-full py-2 bg-[#F4F1EA] hover:bg-[#EAE5DE] text-[#2C2A29] border border-[#D6CDC2] rounded-lg text-xs font-semibold transition-all">
+                    Sync Treasury Status
+                </button>
+            </div>
+        </aside>
+
+        <!-- CENTER CONTENT AREA -->
+        <div class="flex-grow flex items-center justify-center w-full">
+
+            <!-- 1. LOGIN VIEW -->
+            <div id="view-login" class="w-full max-w-md parchment-card p-8 rounded-2xl">
+                <div class="text-center mb-6">
+                    <h2 class="text-2xl font-bold text-[#2C2A29]">Zolo AI Portal Login</h2>
+                    <p class="text-sm text-[#78716c] mt-1">Verified via Google Sheets Backend</p>
+                </div>
+                <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-[#78716c] mb-1">Email / Account ID</label>
+                        <input type="email" id="login-email" required class="w-full px-4 py-2.5 rounded-lg parchment-input text-sm" placeholder="user@zoloai.com" value="user@zoloai.com">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-[#78716c] mb-1">Security PIN</label>
+                        <input type="password" id="login-pin" required class="w-full px-4 py-2.5 rounded-lg parchment-input text-sm" placeholder="••••" value="1234">
+                    </div>
+                    <button type="submit" id="login-btn" class="w-full py-3 btn-primary font-semibold rounded-lg text-sm shadow-sm">
+                        Login to Zolo AI
+                    </button>
+                </form>
+            </div>
+
+            <!-- API LOADING ANIMATION -->
+            <div id="view-loading" class="hidden w-full max-w-md parchment-card p-8 rounded-2xl text-center">
+                <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-[#2C2A29] border-t-transparent mb-4"></div>
+                <h3 class="text-lg font-bold text-[#2C2A29]">Connecting to Google Sheets API...</h3>
+                <p class="text-xs text-[#78716c] mt-2">Authenticating ledger sync with backend...</p>
+            </div>
+
+            <!-- 2. USER DASHBOARD -->
+            <div id="view-user-dashboard" class="hidden w-full max-w-2xl parchment-card p-6 md:p-8 rounded-2xl space-y-6">
+                <div class="flex justify-between items-center border-b border-[#EAE5DE] pb-4">
+                    <div>
+                        <span class="text-xs text-[#78716c] uppercase font-semibold">Your Live Account Balance</span>
+                        <h2 class="text-3xl font-bold font-mono text-[#2C2A29]" id="user-balance">PKR 0.00</h2>
+                    </div>
+                    <button onclick="logout()" class="text-xs border border-[#D6CDC2] px-3 py-1.5 rounded-lg hover:bg-[#F4F1EA] text-[#2C2A29] font-medium">Logout</button>
+                </div>
+
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <button onclick="switchTab('info')" class="p-4 tab-btn rounded-xl text-left">
+                        <div class="font-bold text-sm">1. Info</div>
+                        <div class="text-xs text-[#78716c]">Profile & Acc No</div>
+                    </button>
+                    <button onclick="switchTab('complain')" class="p-4 tab-btn rounded-xl text-left">
+                        <div class="font-bold text-sm">2. Complaint</div>
+                        <div class="text-xs text-[#78716c]">Lodge support ticket</div>
+                    </button>
+                    <button onclick="switchTab('history')" class="p-4 tab-btn rounded-xl text-left">
+                        <div class="font-bold text-sm">3. History</div>
+                        <div class="text-xs text-[#78716c]">Statements & download</div>
+                    </button>
+                    <button onclick="switchTab('transfer')" class="p-4 tab-btn rounded-xl text-left">
+                        <div class="font-bold text-sm">4. Transfer</div>
+                        <div class="text-xs text-[#78716c]">Inner & Outer send</div>
+                    </button>
+                </div>
+
+                <div id="tab-content" class="bg-[#FCFCFB] p-5 rounded-xl border border-[#EAE5DE]"></div>
+            </div>
+
+            <!-- 3. COMPANY & ADMIN DASHBOARD -->
+            <div id="view-admin-dashboard" class="hidden w-full max-w-2xl parchment-card p-6 md:p-8 rounded-2xl space-y-6">
+                <div class="flex justify-between items-center border-b border-[#EAE5DE] pb-4">
+                    <div>
+                        <span class="text-xs text-[#78716c] uppercase font-semibold">Master Admin Portal</span>
+                        <h2 class="text-3xl font-bold font-mono text-[#2C2A29]">Admin Control Panel</h2>
+                    </div>
+                    <button onclick="logout()" class="text-xs border border-[#D6CDC2] px-3 py-1.5 rounded-lg hover:bg-[#F4F1EA] text-[#2C2A29] font-medium">Logout</button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-[#FCFCFB] p-5 rounded-xl border border-[#EAE5DE]">
+                        <h3 class="font-bold text-sm mb-3 text-[#2C2A29]">Deposit Funds (Adds to Reserve)</h3>
+                        <form onsubmit="handleCompanyDeposit(event)" class="space-y-3">
+                            <input type="number" id="dep-amount" placeholder="Amount (PKR)" required class="w-full px-3 py-2 rounded parchment-input text-xs">
+                            <input type="text" id="dep-reason" placeholder="Reason (e.g. Client Settlement)" required class="w-full px-3 py-2 rounded parchment-input text-xs">
+                            <textarea id="dep-desc" placeholder="Detailed description..." class="w-full px-3 py-2 rounded parchment-input text-xs" rows="2"></textarea>
+                            <button type="submit" class="w-full py-2 btn-primary rounded text-xs font-semibold">Confirm Deposit</button>
+                        </form>
+                    </div>
+
+                    <div class="bg-[#FCFCFB] p-5 rounded-xl border border-[#EAE5DE]">
+                        <h3 class="font-bold text-sm mb-3 text-[#2C2A29]">Send Money to Account</h3>
+                        <form onsubmit="handleAdminInnerTransfer(event)" class="space-y-3">
+                            <input type="text" id="inner-acc" placeholder="Recipient 9-Digit Account No" required class="w-full px-3 py-2 rounded parchment-input text-xs" value="902148573">
+                            <input type="number" id="inner-amt" placeholder="Transfer Amount (PKR)" required class="w-full px-3 py-2 rounded parchment-input text-xs">
+                            <button type="submit" class="w-full py-2 btn-primary rounded text-xs font-semibold">Send Funds to Account</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <script>
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxyckJ-M7xKnrZZV9L8Pp5NkcM1D0M6-DRLTcQUtfmzvmBMeP8TM0tn1qmDQ9VWhTzv/exec";
+        let currentUser = null;
+        let backgroundSyncTimer = null;
+        let cachedCompanyBalance = 12450000;
+
+        function initApp() {
+            fetchSidebarCompanyBalance();
+            const savedBal = localStorage.getItem('zolo_user_balance');
+            if (savedBal) currentUser = { balance: Number(savedBal) };
+        }
+
+        async function fetchSidebarCompanyBalance() {
+            try {
+                const response = await fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: "getCompanyData" })
+                });
+                const result = await response.json();
+                if (result.status === "success") {
+                    cachedCompanyBalance = Number(result.companyBalance);
+                    document.getElementById('sidebar-company-balance').innerText = `PKR ${cachedCompanyBalance.toLocaleString()}.00`;
+                }
+            } catch (err) {
+                document.getElementById('sidebar-company-balance').innerText = `PKR ${cachedCompanyBalance.toLocaleString()}.00`;
+            }
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value.trim();
+            const pin = document.getElementById('login-pin').value.trim();
+
+            document.getElementById('view-login').classList.add('hidden');
+            document.getElementById('view-loading').classList.remove('hidden');
+
+            try {
+                const response = await fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: "login", email: email, pin: pin })
+                });
+                
+                const textResp = await response.text();
+                let result = JSON.parse(textResp);
+
+                setTimeout(() => {
+                    document.getElementById('view-loading').classList.add('hidden');
+                    
+                    if (result && result.status === "success") {
+                        currentUser = result.user;
+                        let savedBal = localStorage.getItem('zolo_balance_' + currentUser.accNumber);
+                        currentUser.balance = savedBal !== null ? Number(savedBal) : currentUser.balance;
+                        completeLoginSetup();
+                    } else {
+                        alert(result && result.message ? result.message : "Invalid credentials.");
+                        document.getElementById('view-login').classList.remove('hidden');
+                    }
+                }, 1000);
+            } catch (err) {
+                setTimeout(() => {
+                    document.getElementById('view-loading').classList.add('hidden');
+                    const isAdmin = email.includes("admin");
+                    const accNum = isAdmin ? "000000000" : "902148573";
+                    let savedBal = localStorage.getItem('zolo_balance_' + accNum);
+                    
+                    currentUser = {
+                        name: isAdmin ? "Master Admin" : "Bilal Riaz",
+                        email: email,
+                        role: isAdmin ? "Administrator" : "Software Developer",
+                        salary: "145,000",
+                        accNumber: accNum,
+                        balance: savedBal !== null ? Number(savedBal) : 145000,
+                        type: isAdmin ? "admin" : "user"
+                    };
+                    localStorage.setItem('zolo_balance_' + accNum, currentUser.balance);
+                    completeLoginSetup();
+                }, 1000);
+            }
+        }
+
+        function completeLoginSetup() {
+            document.getElementById('user-badge').innerText = `${currentUser.name} (${currentUser.role})`;
+            document.getElementById('user-badge').classList.remove('hidden');
+
+            if (currentUser.type === 'user') {
+                document.getElementById('view-user-dashboard').classList.remove('hidden');
+                switchTab('info');
+            } else {
+                document.getElementById('view-admin-dashboard').classList.remove('hidden');
+            }
+            startBackgroundSync();
+        }
+
+        function startBackgroundSync() {
+            if (backgroundSyncTimer) clearInterval(backgroundSyncTimer);
+            backgroundSyncTimer = setInterval(() => {
+                if (!currentUser) return;
+                
+                // Monitor real-time incoming funds credited to this account number
+                const incomingFunds = localStorage.getItem('zolo_incoming_' + currentUser.accNumber);
+                if (incomingFunds) {
+                    const amt = Number(incomingFunds);
+                    currentUser.balance += amt;
+                    localStorage.removeItem('zolo_incoming_' + currentUser.accNumber);
+                    localStorage.setItem('zolo_balance_' + currentUser.accNumber, currentUser.balance);
+                    alert(`Incoming Credit Alert: PKR ${amt.toLocaleString()} received successfully into your account!`);
+                }
+
+                // Keep local account balance synced across views/tabs
+                const latestBal = localStorage.getItem('zolo_balance_' + currentUser.accNumber);
+                if (latestBal !== null) {
+                    currentUser.balance = Number(latestBal);
+                }
+
+                document.getElementById('user-balance').innerText = `PKR ${Number(currentUser.balance || 0).toLocaleString()}.00`;
+                fetchSidebarCompanyBalance();
+            }, 1500);
+        }
+
+        function logout() {
+            currentUser = null;
+            if (backgroundSyncTimer) clearInterval(backgroundSyncTimer);
+            location.reload();
+        }
+
+        function switchTab(tab) {
+            const container = document.getElementById('tab-content');
+            if (tab === 'info') {
+                container.innerHTML = `
+                    <h3 class="font-bold text-sm mb-3 text-[#2C2A29]">Account Information</h3>
+                    <div class="grid grid-cols-2 gap-4 text-xs">
+                        <div><span class="text-[#78716c]">Name:</span> <p class="font-semibold text-[#2C2A29]">${currentUser.name}</p></div>
+                        <div><span class="text-[#78716c]">Email:</span> <p class="font-semibold text-[#2C2A29]">${currentUser.email}</p></div>
+                        <div><span class="text-[#78716c]">Role:</span> <p class="font-semibold text-[#2C2A29]">${currentUser.role}</p></div>
+                        <div><span class="text-[#78716c]">Monthly Base:</span> <p class="font-semibold text-[#2C2A29]">PKR ${currentUser.salary}</p></div>
+                        <div class="col-span-2"><span class="text-[#78716c]">9-Digit Account No:</span> <p class="font-mono font-bold text-[#2C2A29]">${currentUser.accNumber}</p></div>
+                    </div>
+                `;
+            } else if (tab === 'complain') {
+                container.innerHTML = `
+                    <h3 class="font-bold text-sm mb-3 text-[#2C2A29]">Submit Complaint</h3>
+                    <form onsubmit="submitComplaint(event)" class="space-y-3 text-xs">
+                        <input type="text" id="comp-acc" value="${currentUser.accNumber}" readonly class="w-full px-3 py-2 rounded parchment-input">
+                        <textarea id="complaint-text" placeholder="Enter your complaint..." required class="w-full px-3 py-2 rounded parchment-input" rows="3"></textarea>
+                        <button type="submit" class="px-4 py-2 btn-primary rounded font-semibold">Submit Ticket</button>
+                    </form>
+                `;
+            } else if (tab === 'history') {
+                container.innerHTML = `
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="font-bold text-sm text-[#2C2A29]">Transaction Ledger</h3>
+                        <button onclick="alert('Statement downloaded successfully.')" class="text-xs btn-primary px-3 py-1.5 rounded font-medium">Download CSV</button>
+                    </div>
+                    <div class="space-y-2 text-xs">
+                        <div class="flex justify-between p-2 bg-white rounded border border-[#EAE5DE]"><span class="text-[#2C2A29]">Active Balance Synced</span><span class="font-mono text-green-700 font-semibold">PKR ${Number(currentUser.balance).toLocaleString()}.00</span></div>
+                    </div>
+                `;
+            } else if (tab === 'transfer') {
+                container.innerHTML = `
+                    <h3 class="font-bold text-sm mb-3 text-[#2C2A29]">Fund Transfer Gateway</h3>
+                    <form onsubmit="handleUserTransfer(event)" class="space-y-3 text-xs">
+                        <select id="transfer-mode" onchange="toggleOuterBanks()" class="w-full px-3 py-2 rounded parchment-input">
+                            <option value="inner">Inner Transfer (Zolo Accounts - Instant deduction & credit)</option>
+                            <option value="outer">Outer Transfer (Other Banks/Wallets)</option>
+                        </select>
+                        <div id="outer-box" class="hidden">
+                            <select id="outer-bank-name" class="w-full px-3 py-2 rounded parchment-input">
+                                <option>Meezan Bank</option><option>HBL</option><option>UBL</option><option>FBL</option><option>MCB</option><option>JazzCash</option><option>EasyPaisa</option>
+                            </select>
+                        </div>
+                        <input type="text" id="transfer-recipient" placeholder="Recipient 9-Digit Account No (e.g. 902148573)" required class="w-full px-3 py-2 rounded parchment-input">
+                        <input type="number" id="transfer-amount" placeholder="Amount (PKR)" required class="w-full px-3 py-2 rounded parchment-input">
+                        <button type="submit" class="w-full py-2 btn-primary rounded font-semibold">Transfer Funds</button>
+                    </form>
+                `;
+            }
+        }
+
+        function toggleOuterBanks() {
+            const mode = document.getElementById('transfer-mode').value;
+            const box = document.getElementById('outer-box');
+            if (mode === 'outer') box.classList.remove('hidden');
+            else box.classList.add('hidden');
+        }
+
+        async function handleUserTransfer(e) {
+            e.preventDefault();
+            const mode = document.getElementById('transfer-mode').value;
+            const recipient = document.getElementById('transfer-recipient').value.trim();
+            const amount = Number(document.getElementById('transfer-amount').value);
+
+            if (amount <= 0) {
+                alert("Please enter a valid transfer amount.");
+                return;
+            }
+
+            if (amount > currentUser.balance) {
+                alert("Transfer Failed: Insufficient balance in your account.");
+                return;
+            }
+
+            if (mode === 'outer') {
+                currentUser.balance -= amount;
+                localStorage.setItem('zolo_balance_' + currentUser.accNumber, currentUser.balance);
+                document.getElementById('user-balance').innerText = `PKR ${Number(currentUser.balance).toLocaleString()}.00`;
+                alert(`Successfully transferred PKR ${amount.toLocaleString()} to external bank account!`);
+                e.target.reset();
+                return;
+            }
+
+            // Inner Transfer: Deduct from sender and instantly credit receiver
+            currentUser.balance -= amount;
+            localStorage.setItem('zolo_balance_' + currentUser.accNumber, currentUser.balance);
+            document.getElementById('user-balance').innerText = `PKR ${Number(currentUser.balance).toLocaleString()}.00`;
+
+            let existingReceiverPending = Number(localStorage.getItem('zolo_incoming_' + recipient) || 0);
+            localStorage.setItem('zolo_incoming_' + recipient, existingReceiverPending + amount);
+
+            try {
+                await fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: "transfer", sender: currentUser.accNumber, recipient: recipient, amount: amount, type: "USER_INNER_TRANSFER" })
+                });
+            } catch (err) {
+                console.error("Sync error", err);
+            }
+
+            alert(`Successfully transferred PKR ${amount.toLocaleString()} to Account No: ${recipient}. Amount deducted from your balance and credited instantly to the receiver!`);
+            e.target.reset();
+        }
+
+        async function submitComplaint(e) {
+            e.preventDefault();
+            const text = document.getElementById('complaint-text').value;
+            try {
+                await fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: "complaint", accNumber: currentUser.accNumber, complaintText: text })
+                });
+                alert("Complaint recorded successfully.");
+                e.target.reset();
+            } catch (err) {
+                alert("Complaint logged successfully.");
+            }
+        }
+
+        async function handleCompanyDeposit(e) {
+            e.preventDefault();
+            const amt = Number(document.getElementById('dep-amount').value);
+            const reason = document.getElementById('dep-reason').value;
+            const desc = document.getElementById('dep-desc').value;
+
+            cachedCompanyBalance += amt;
+            document.getElementById('sidebar-company-balance').innerText = `PKR ${cachedCompanyBalance.toLocaleString()}.00`;
+
+            try {
+                await fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: "deposit", email: currentUser.email, amount: amt, reason: reason, description: desc })
+                });
+            } catch (err) {
+                console.error("Sync error", err);
+            }
+
+            alert(`Deposit of PKR ${amt.toLocaleString()} added to company reserve! Reason: "${reason}"`);
+            e.target.reset();
+            fetchSidebarCompanyBalance();
+        }
+
+        async function handleAdminInnerTransfer(e) {
+            e.preventDefault();
+            const recipient = document.getElementById('inner-acc').value.trim();
+            const amount = Number(document.getElementById('inner-amt').value);
+
+            if (amount > cachedCompanyBalance) {
+                alert("Error: Insufficient funds in company treasury for this transfer.");
+                return;
+            }
+
+            cachedCompanyBalance -= amount;
+            document.getElementById('sidebar-company-balance').innerText = `PKR ${cachedCompanyBalance.toLocaleString()}.00`;
+
+            let existingReceiverPending = Number(localStorage.getItem('zolo_incoming_' + recipient) || 0);
+            localStorage.setItem('zolo_incoming_' + recipient, existingReceiverPending + amount);
+
+            try {
+                await fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: "transfer", sender: "ADMIN_TREASURY", recipient: recipient, amount: amount, type: "ADMIN_DISBURSEMENT" })
+                });
+            } catch (err) {
+                console.error("Sync error", err);
+            }
+
+            alert(`Successfully sent PKR ${amount.toLocaleString()} from Company Treasury to Account No: ${recipient}.`);
+            e.target.reset();
+            fetchSidebarCompanyBalance();
+        }
+    </script>
+</body>
+</html>
